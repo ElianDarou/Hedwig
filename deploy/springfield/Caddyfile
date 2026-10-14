@@ -1,0 +1,26 @@
+{
+	admin off
+}
+
+https://springfield:8443, https://springfield.fritz.box:8443, https://192.168.178.200:8443 {
+	tls internal
+	encode zstd gzip
+
+	handle_path /install/* {
+		root * /srv/install
+		header Cache-Control "no-store"
+		header Content-Disposition "attachment"
+		file_server
+	}
+
+	handle {
+		reverse_proxy hedwig:8080
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+}

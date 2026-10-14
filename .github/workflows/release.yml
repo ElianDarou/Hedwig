@@ -1,0 +1,41 @@
+name: Build release packages
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: |
+          docker build -f desktop/Containerfile.bundle --target artifact \
+            --output type=local,dest=dist/desktop .
+          version=$(node -p "require('./desktop/package.json').version")
+          mv dist/desktop/*.deb "dist/hedwig-desktop_${version}_amd64.deb"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux-amd64
+          path: dist/*.deb
+          if-no-files-found: error
+  server:
+    runs-on: ubuntu-24.04
+    container: rust:1.94-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: cargo test --locked --workspace
+      - run: cargo build --locked --release --workspace
+      - run: npm ci && npm run build
+        working-directory: web
+      - run: bash scripts/package-server.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-linux-amd64
+          path: dist/*.tar.gz
+          if-no-files-found: error

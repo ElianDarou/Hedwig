@@ -1,0 +1,10 @@
+FROM rust:1.94-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64 && rm -rf /var/lib/apt/lists/*
+RUN rustup target add x86_64-pc-windows-gnu
+WORKDIR /source
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ crates/
+RUN find crates -type f -exec touch {} +
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/source/target,sharing=locked \
+    cargo check -p hedwig-files-windows --target x86_64-pc-windows-gnu --locked

@@ -1,0 +1,39 @@
+# Lokale Build-, Cache- und Abhängigkeitsverzeichnisse
+.git/
+.t3/
+.gradle/
+.idea/
+.vscode/
+node_modules/
+target/
+build/
+dist/
+.next/
+.expo/
+coverage/
+
+# Lokale Zugangsdaten und Maschinenkonfiguration
+.env
+.env.*
+!.env.example
+!.env.sample
+local.properties
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+google-services.json
+credentials*.json
+secrets*.json
+
+# Laufzeitdaten und große abgeleitete Dateien
+*.log
+*.tmp
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+.DS_Store
+

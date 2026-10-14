@@ -1,0 +1,60 @@
+name: hedwig
+
+services:
+  hedwig:
+    build:
+      context: ../..
+      dockerfile: Containerfile
+    image: hedwig:0.1.0
+    restart: unless-stopped
+    init: true
+    environment:
+      HEDWIG_DATA_DIR: /var/lib/hedwig
+      HEDWIG_WEB_DIR: /opt/hedwig/web
+      HEDWIG_LISTEN: 0.0.0.0:8080
+      HEDWIG_BACKUP_DIR: /var/backups/hedwig
+      HEDWIG_BACKUP_INTERVAL_HOURS: 24
+      HEDWIG_BACKUP_KEEP: 14
+      HEDWIG_MAINTENANCE_INTERVAL_HOURS: 6
+      RUST_LOG: hedwig_server=info,tower_http=info
+    volumes:
+      - ${HEDWIG_DATA_HOST_DIR:-/data/hedwig}:/var/lib/hedwig
+      - ${HEDWIG_BACKUP_HOST_DIR:-/home/elian/services/hedwig/backups}:/var/backups/hedwig
+    ports:
+      - 127.0.0.1:8400:8080
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/hedwigctl", "--database", "/var/lib/hedwig/metadata.db", "setup-status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  https:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    depends_on:
+      hedwig:
+        condition: service_healthy
+    ports:
+      - 8443:8443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${HEDWIG_RELEASES_HOST_DIR:-/home/elian/services/hedwig/releases}:/srv/install:ro
+      - ${HEDWIG_CADDY_DATA_HOST_DIR:-/home/elian/services/hedwig/caddy-data}:/data
+      - ${HEDWIG_CADDY_CONFIG_HOST_DIR:-/home/elian/services/hedwig/caddy-config}:/config
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

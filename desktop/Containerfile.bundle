@@ -1,0 +1,26 @@
+FROM node:22-bookworm AS node
+
+FROM rust:1.94-bookworm AS builder
+COPY --from=node /usr/local/ /usr/local/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl file libappindicator3-dev librsvg2-dev \
+    libssl-dev libwebkit2gtk-4.1-dev patchelf pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /source
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ crates/
+COPY desktop/package.json desktop/package-lock.json desktop/tsconfig*.json desktop/vite.config.ts desktop/index.html desktop/
+COPY desktop/src/ desktop/src/
+COPY desktop/src-tauri/ desktop/src-tauri/
+RUN find crates desktop/src-tauri -type f -exec touch {} +
+WORKDIR /source/desktop
+RUN --mount=type=cache,target=/root/.npm,sharing=locked npm ci
+RUN npm run build
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/source/desktop/src-tauri/target,sharing=locked \
+    npm run tauri build -- --bundles deb -- --locked \
+    && mkdir -p /out \
+    && cp /source/desktop/src-tauri/target/release/bundle/deb/*.deb /out/
+
+FROM scratch AS artifact
+COPY --from=builder /out/ /

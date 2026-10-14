@@ -1,0 +1,14 @@
+FROM rust:1.94-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl file libappindicator3-dev librsvg2-dev \
+    libssl-dev libwebkit2gtk-4.1-dev patchelf pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /source
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ crates/
+COPY desktop/src-tauri/ desktop/src-tauri/
+RUN find crates desktop/src-tauri -type f -exec touch {} +
+WORKDIR /source/desktop/src-tauri
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/source/desktop/src-tauri/target,sharing=locked \
+    cargo check --locked

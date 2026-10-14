@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="AcceptsUserCertificates">
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- Homelab-Betreiber können ihre bewusst installierte lokale CA verwenden. -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

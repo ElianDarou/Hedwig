@@ -24,6 +24,8 @@ jobs:
   server:
     runs-on: ubuntu-24.04
     container: rust:1.94-bookworm
+    env:
+      CARGO_BUILD_JOBS: '4'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
